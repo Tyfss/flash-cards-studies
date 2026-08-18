@@ -1,0 +1,13 @@
+# Sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.vscode/
+.idea/
+*.swp
+
+# Nunca versionar chaves ou segredos, caso algum dia existam num .env local
+.env
+.env.local
