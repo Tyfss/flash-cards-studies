@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flash Cards Studies</title>
+<!--
+  Content-Security-Policy: trava de onde o site pode carregar script/dados.
+  Se algo parar de funcionar depois de editar o JavaScript deste arquivo, os
+  hashes 'sha256-...' abaixo precisam ser recalculados (eles mudam se o
+  conteúdo dos blocos de script mudar, mesmo um espaço). Veja a seção de
+  segurança na documentação para o comando que recalcula isso.
+-->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'none';
+  script-src 'self' 'sha256-3sF6Xl8lL5wPEnxSlqtUNmONRFUe8rJ12l5OE9NYi48=' 'sha256-vx1awx2z1qYem9iMZGCTZykhF/RNs6GYmBRjw00qG2U=' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src https://fonts.gstatic.com;
+  img-src 'self' data: blob:;
+  connect-src 'self' https://generativelanguage.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://hf.co https://*.hf.co;
+  worker-src 'self' blob:;
+  object-src 'none';
+  base-uri 'none';
+  frame-ancestors 'none';
+  form-action 'none';
+">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0E14;
+    --panel:#12161F;
+    --panel-2:#181D28;
+    --border:rgba(255,255,255,0.08);
+    --border-strong:rgba(255,255,255,0.14);
+    --text:#EDEFF3;
+    --text-muted:#8B93A6;
+    --card-bg:#FBFAF7;
+    --card-ink:#1C2027;
+    --accent:#2FBF9F;
+    --accent-dark:#249E84;
+    --accent-soft:rgba(47,191,159,0.12);
+    --violet:#8F7FE8;
+    --violet-soft:rgba(143,127,232,0.14);
+    --ok:#3FBE7A;
+    --err:#F0685C;
+    --radius-lg:18px;
+    --radius-md:12px;
+    --radius-sm:9px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    background-image:
+      radial-gradient(circle at 12% 0%, rgba(47,191,159,0.08), transparent 40%),
+      radial-gradient(circle at 90% 30%, rgba(143,127,232,0.07), transparent 40%);
+    color:var(--text);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    min-height:100vh;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--accent);color:#08110E;}
+
+  .wrap{max-width:920px;margin:0 auto;padding:64px 24px 96px;}
+
+  header.hero{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    padding-bottom:44px;
+    margin-bottom:40px;
+  }
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    align-self:flex-start;
+    background:var(--accent-soft);
+    color:var(--accent);
+    font-size:12.5px;
+    font-weight:600;
+    padding:6px 13px;
+    border-radius:100px;
+    letter-spacing:0.01em;
+  }
+  h1{
+    font-family:'Sora',sans-serif;
+    font-weight:700;
+    font-size:clamp(34px,5vw,48px);
+    margin:0;
+    color:var(--text);
+    letter-spacing:-0.02em;
+  }
+  .sub{
+    color:var(--text-muted);
+    font-size:16px;
+    max-width:540px;
+  }
+
+  section.panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    padding:32px;
+    margin-bottom:24px;
+  }
+  section.panel h2{
+    font-family:'Sora',sans-serif;
+    font-weight:700;
+    font-size:17px;
+    color:var(--text);
+    margin:0 0 22px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    letter-spacing:-0.01em;
+  }
+  .step-num{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:26px;height:26px;
+    border-radius:50%;
+    background:var(--accent-soft);
+    color:var(--accent);
+    font-size:13px;
+    font-weight:700;
+    flex-shrink:0;
+  }
+
+  /* Dropzone */
+  .dropzone{
+    border:1.5px dashed var(--border-strong);
+    border-radius:var(--radius-md);
+    padding:40px 20px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+    position:relative;
+  }
+  .dropzone:hover, .dropzone.drag{
+    border-color:var(--accent);
+    background:var(--accent-soft);
+  }
+  .dropzone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+  .dropzone .dz-title{font-size:15.5px;font-weight:600;color:var(--text);margin-bottom:5px;}
+  .dropzone .dz-sub{font-size:13.5px;color:var(--text-muted);}
+
+  .filelist{margin-top:16px;display:flex;flex-direction:column;gap:8px;}
+  .file-row{
+    display:flex;align-items:center;gap:10px;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+    padding:11px 14px;
+    font-size:13.5px;
+  }
+  .file-row .name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .file-row .status{font-size:12px;color:var(--text-muted);white-space:nowrap;}
+  .file-row .status.ok{color:var(--ok);}
+  .file-row .status.err{color:var(--err);}
+  .file-row button{
+    background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;line-height:1;padding:2px 6px;
+  }
+  .file-row button:hover{color:var(--err);}
+
+  .row{display:flex;gap:16px;flex-wrap:wrap;margin-top:22px;}
+  .field{flex:1;min-width:220px;display:flex;flex-direction:column;gap:7px;}
+  .field label{font-size:13px;color:var(--text-muted);}
+  .field label a{color:var(--accent);text-decoration:none;font-weight:600;}
+  .field label a:hover{text-decoration:underline;}
+  .field input[type=password], .field input[type=text], .field input[type=number]{
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+    color:var(--text);
+    padding:11px 13px;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+  }
+  .field input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  .field .hint{font-size:12px;color:var(--text-muted);}
+
+  .actions{display:flex;align-items:center;gap:14px;margin-top:26px;flex-wrap:wrap;}
+  button{font-family:'Inter',sans-serif;}
+  button.primary{
+    background:var(--accent);
+    color:#08110E;
+    border:none;
+    font-weight:700;
+    font-size:14.5px;
+    padding:13px 24px;
+    border-radius:var(--radius-sm);
+    cursor:pointer;
+    transition:background .15s ease, transform .1s ease;
+  }
+  button.primary:hover:not(:disabled){background:var(--accent-dark);}
+  button.primary:active:not(:disabled){transform:translateY(1px);}
+  button.primary:disabled{opacity:0.35;cursor:not-allowed;}
+
+  button.ghost{
+    background:none;
+    border:1px solid var(--border-strong);
+    color:var(--text);
+    font-size:13.5px;
+    font-weight:500;
+    padding:11px 20px;
+    border-radius:var(--radius-sm);
+    cursor:pointer;
+    transition:border-color .15s ease, color .15s ease;
+  }
+  button.ghost:hover{border-color:var(--accent);color:var(--accent);}
+
+  .status-line{font-size:13px;color:var(--text-muted);min-height:16px;margin-top:14px;}
+  .status-line.err{color:var(--err);}
+  .status-line.ok{color:var(--ok);}
+
+  /* Loading */
+  .loading-box{display:none;align-items:center;gap:12px;}
+  .loading-box.show{display:flex;}
+  .spinner{
+    width:17px;height:17px;border-radius:50%;
+    border:2px solid var(--accent-soft);
+    border-top-color:var(--accent);
+    animation:spin .8s linear infinite;
+    flex-shrink:0;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* Results */
+  #resultsSection{display:none;}
+  #resultsSection.show{display:block;}
+  .empty-state{
+    display:none;
+    text-align:center;
+    color:var(--text-muted);
+    font-size:14px;
+    border:1px dashed var(--border-strong);
+    border-radius:var(--radius-md);
+    padding:36px 16px;
+  }
+  .empty-state.show{display:block;}
+  .results-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:8px;}
+  .count-badge{
+    font-size:12.5px;font-weight:600;color:var(--accent);
+    background:var(--accent-soft);border-radius:100px;padding:5px 13px;
+  }
+
+  .card-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+    gap:20px;
+    margin-top:22px;
+  }
+  .flashcard{
+    perspective:1400px;
+    height:240px;
+  }
+  .flashcard-inner{
+    position:relative;width:100%;height:100%;
+    transition:transform .45s cubic-bezier(.4,.2,.2,1);
+    transform-style:preserve-3d;
+  }
+  .flashcard.flipped .flashcard-inner{transform:rotateY(180deg);}
+  .face{
+    position:absolute;inset:0;
+    background:var(--card-bg);
+    color:var(--card-ink);
+    border-radius:var(--radius-md);
+    box-shadow:0 10px 24px rgba(0,0,0,0.28), 0 0 0 1px rgba(0,0,0,0.03);
+    backface-visibility:hidden;
+    padding:22px 22px 16px;
+    display:flex;
+    flex-direction:column;
+  }
+  .face .tag{
+    display:inline-flex;
+    align-items:center;
+    align-self:flex-start;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    padding:4px 10px;
+    border-radius:100px;
+    margin-bottom:14px;
+  }
+  .front-face .tag{background:var(--accent-soft);color:var(--accent-dark);}
+  .back-face .tag{background:var(--violet-soft);color:var(--violet);}
+  .face .content{
+    flex:1;
+    font-size:16.5px;
+    font-weight:500;
+    overflow-y:auto;
+    outline:none;
+    line-height:1.5;
+  }
+  .face .content:focus{background:rgba(0,0,0,0.03);border-radius:6px;}
+  .back-face{transform:rotateY(180deg);}
+  .face .hint-flip{
+    font-size:11px;color:#A6A196;text-align:right;margin-top:10px;
+  }
+  .card-tools{
+    position:absolute;top:10px;right:10px;display:flex;gap:4px;z-index:2;
+  }
+  .card-tools button{
+    background:rgba(11,14,20,0.78);
+    border:none;color:#fff;
+    width:24px;height:24px;border-radius:50%;
+    font-size:12px;cursor:pointer;line-height:1;
+  }
+  .card-tools button:hover{background:var(--err);}
+  .flashcard .clickable{cursor:pointer;}
+
+  .export-bar{
+    margin-top:30px;
+    display:flex;gap:12px;flex-wrap:wrap;align-items:center;
+  }
+  .export-bar .spacer{flex:1;}
+  .export-hint{
+    font-size:12px;color:var(--text-muted);width:100%;margin-top:-4px;
+  }
+
+  footer{
+    margin-top:56px;
+    padding-top:24px;
+    border-top:1px solid var(--border);
+    font-size:13px;
+    color:var(--text-muted);
+  }
+  footer a{color:var(--accent);text-decoration:none;font-weight:600;}
+  footer a:hover{text-decoration:underline;}
+
+  .visually-hidden{
+    position:absolute !important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;
+  }
+
+  @media (max-width:520px){
+    .wrap{padding:40px 16px 64px;}
+    section.panel{padding:22px;}
+    .flashcard{height:220px;}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    .flashcard-inner, .spinner{transition:none;animation:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="badge">Estudo com IA</span>
+    <h1>Flash Cards Studies</h1>
+    <p class="sub">Envie fotos de anotações, PDFs ou documentos. A IA lê o conteúdo e monta um conjunto de flashcards prontos para estudar ou importar no Anki.</p>
+  </header>
+
+  <!-- STEP 1: UPLOAD -->
+  <section class="panel">
+    <h2><span class="step-num">1</span>Enviar material</h2>
+
+    <div class="dropzone" id="dropzone">
+      <input type="file" id="fileInput" multiple accept=".png,.jpg,.jpeg,.webp,.pdf,.docx,.pptx,.mp4,.mov,.webm,.mp3,.wav,.m4a,.ogg,image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation,video/*,audio/*">
+      <div class="dz-title">Arraste arquivos aqui ou clique para escolher</div>
+      <div class="dz-sub">Imagens, PDF, DOCX, PPTX, ou vídeo/áudio (MP4, MOV, MP3, WAV...), pode enviar mais de um</div>
+    </div>
+
+    <div class="filelist" id="fileList"></div>
+
+    <div class="row" style="margin-top:16px;">
+      <div class="field">
+        <label for="youtubeInput">Ou colar um link do YouTube</label>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="youtubeInput" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off" style="flex:1;">
+          <button type="button" class="ghost" id="youtubeAddBtn">Adicionar link</button>
+        </div>
+        <span class="hint">O vídeo precisa ser público. O próprio Gemini assiste e ouve o vídeo, direto do link: nada é baixado pelo site.</span>
+      </div>
+    </div>
+
+    <p class="hint" style="margin-top:14px;">Vídeo e áudio enviados como arquivo são transcritos no seu navegador, sem enviar a nenhum servidor, funciona melhor até uns 25 minutos. Spotify e outros podcasts não têm uma opção de link direto: baixe o áudio antes e envie como arquivo.</p>
+  </section>
+
+  <!-- STEP 2: SETTINGS -->
+  <section class="panel">
+    <h2><span class="step-num">2</span>Configurar geração</h2>
+
+    <div class="row">
+      <div class="field">
+        <label for="apiKey">Chave da API do Gemini, gratuita: <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">obter chave</a></label>
+        <div style="display:flex;gap:8px;">
+          <input type="password" id="apiKey" placeholder="Cole sua chave aqui (começa com AIza...)" autocomplete="off" style="flex:1;">
+          <button type="button" class="ghost" id="forgetKeyBtn" title="Apagar a chave da memória agora">Esquecer</button>
+        </div>
+        <span class="hint">A chave fica só no seu navegador, nesta sessão, e é enviada direto para a Google, sem passar por nenhum servidor nosso. Some sozinha ao recarregar a página, ou clique em "Esquecer" para apagar na hora.</span>
+      </div>
+      <div class="field" style="max-width:180px;">
+        <label for="numCards">Quantidade de cartões</label>
+        <input type="number" id="numCards" value="10" min="3" max="60">
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="generateBtn" disabled>Gerar flashcards</button>
+      <div class="loading-box" id="loadingBox">
+        <div class="spinner"></div>
+        <span id="loadingText">Processando...</span>
+      </div>
+    </div>
+    <div class="status-line" id="statusLine"></div>
+  </section>
+
+  <!-- STEP 3: RESULTS -->
+  <section class="panel show" id="resultsSection">
+    <div class="results-head">
+      <h2 style="margin:0;"><span class="step-num">3</span>Seus flashcards</h2>
+      <span class="count-badge" id="countBadge">0 cartões</span>
+    </div>
+    <p class="sub" style="margin-top:10px;margin-bottom:0;">Crie cartões manualmente quando quiser, a IA soma os dela aos que você já tiver, sem apagar nada. Clique num cartão para virar, no texto para editar.</p>
+
+    <div class="card-grid" id="cardGrid"></div>
+    <p class="empty-state" id="emptyState">Nenhum flashcard ainda. Adicione um manualmente abaixo ou gere com a IA logo acima.</p>
+
+    <div class="export-bar">
+      <button class="ghost" id="addCardBtn">+ Adicionar cartão em branco</button>
+      <button class="ghost" id="offlineBtn">Baixar site offline para estudar</button>
+      <button class="primary" id="exportBtn">Baixar CSV para o Anki</button>
+    </div>
+    <div class="export-hint">O site offline funciona sem internet: abre no navegador, guarda seus flashcards atuais e deixa só estudar, sem precisar de chave de API.</div>
+  </section>
+
+  <footer>
+    Feito para funcionar 100% no navegador, sem servidor e sem custo. As únicas contas necessárias são gratuitas: sua própria chave do <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Google AI Studio</a>. Nada do que você envia é armazenado por este site.
+  </footer>
+
+</div>
+
+<!-- Libraries (CDN, todas gratuitas / open source) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
+
+<!-- Transcrição local de vídeo/áudio (Whisper rodando no navegador, sem servidor, sem chave) -->
+<script type="module">
+  import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0';
+  env.allowLocalModels = false;
+
+  let transcriberPromise = null;
+  window.__getTranscriber = function(onProgressCallback){
+    if (!transcriberPromise) {
+      transcriberPromise = pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny', {
+        progress_callback: onProgressCallback
+      });
+    }
+    return transcriberPromise;
+  };
+</script>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- State ----------
+  const state = {
+    files: [],       // { id, file, name, kind, status, text, error }
+    flashcards: []   // { id, question, answer }
+  };
+  let idCounter = 0;
+  const nextId = () => "id" + (++idCounter);
+
+  // ---------- DOM refs ----------
+  const dropzone   = document.getElementById('dropzone');
+  const fileInput  = document.getElementById('fileInput');
+  const fileListEl = document.getElementById('fileList');
+  const youtubeInputEl = document.getElementById('youtubeInput');
+  const youtubeAddBtn  = document.getElementById('youtubeAddBtn');
+  const apiKeyEl   = document.getElementById('apiKey');
+  const forgetKeyBtn = document.getElementById('forgetKeyBtn');
+  const numCardsEl = document.getElementById('numCards');
+  const generateBtn= document.getElementById('generateBtn');
+  const loadingBox = document.getElementById('loadingBox');
+  const loadingText= document.getElementById('loadingText');
+  const statusLine = document.getElementById('statusLine');
+  const resultsSec = document.getElementById('resultsSection');
+  const cardGrid   = document.getElementById('cardGrid');
+  const countBadge = document.getElementById('countBadge');
+  const addCardBtn = document.getElementById('addCardBtn');
+  const exportBtn  = document.getElementById('exportBtn');
+  const offlineBtn = document.getElementById('offlineBtn');
+  const emptyState = document.getElementById('emptyState');
+
+  // Point pdf.js at its worker (same version, from CDN)
+  if (window['pdfjsLib']) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  }
+
+  // ---------- Helpers ----------
+  function setStatus(msg, kind){
+    statusLine.textContent = msg || "";
+    statusLine.className = "status-line" + (kind ? " " + kind : "");
+  }
+
+  function fileKind(file){
+    const name = file.name.toLowerCase();
+    if (file.type.startsWith('image/') || /\.(png|jpe?g|webp)$/.test(name)) return 'image';
+    if (file.type === 'application/pdf' || name.endsWith('.pdf')) return 'pdf';
+    if (name.endsWith('.docx') || file.type.includes('wordprocessingml')) return 'docx';
+    if (name.endsWith('.pptx') || file.type.includes('presentationml')) return 'pptx';
+    if (file.type.startsWith('video/') || file.type.startsWith('audio/') || /\.(mp4|mov|webm|mp3|wav|m4a|ogg)$/.test(name)) return 'media';
+    return 'unknown';
+  }
+
+  function updateGenerateEnabled(){
+    const hasFiles = state.files.some(f => f.status === 'done');
+    const hasKey = apiKeyEl.value.trim().length > 10;
+    generateBtn.disabled = !(hasFiles && hasKey);
+  }
+  apiKeyEl.addEventListener('input', updateGenerateEnabled);
+  forgetKeyBtn.addEventListener('click', () => {
+    apiKeyEl.value = '';
+    updateGenerateEnabled();
+    setStatus('Chave apagada da memória.', 'ok');
+  });
+
+  // ---------- File list rendering ----------
+  function renderFileList(){
+    fileListEl.innerHTML = "";
+    state.files.forEach(f => {
+      const row = document.createElement('div');
+      row.className = 'file-row';
+
+      const name = document.createElement('span');
+      name.className = 'name';
+      name.textContent = f.name;
+
+      const status = document.createElement('span');
+      status.className = 'status' + (f.status === 'done' ? ' ok' : f.status === 'error' ? ' err' : '');
+      status.textContent =
+        f.status === 'pending' ? 'na fila' :
+        f.status === 'reading' ? (f.progress || 'lendo…') :
+        f.status === 'done' ? (f.kind === 'youtube' ? 'link do YouTube, pronto' : (f.text ? (f.text.length + ' caracteres') : 'sem texto')) :
+        f.status === 'error' ? (f.error || 'erro') : '';
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.setAttribute('aria-label', 'Remover ' + f.name);
+      removeBtn.textContent = '✕';
+      removeBtn.addEventListener('click', () => {
+        state.files = state.files.filter(x => x.id !== f.id);
+        renderFileList();
+        updateGenerateEnabled();
+      });
+
+      row.appendChild(name);
+      row.appendChild(status);
+      row.appendChild(removeBtn);
+      fileListEl.appendChild(row);
+    });
+  }
+
+  // ---------- Extraction ----------
+  async function extractImage(file){
+    if (!window.Tesseract) throw new Error('Biblioteca de OCR não carregou (verifique sua conexão).');
+    const result = await Tesseract.recognize(file, 'por+eng');
+    const text = result && result.data && result.data.text ? result.data.text.trim() : '';
+    if (!text) throw new Error('Não foi possível ler texto nesta imagem.');
+    return text;
+  }
+
+  async function extractPdf(file){
+    if (!window.pdfjsLib) throw new Error('Biblioteca de PDF não carregou (verifique sua conexão).');
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    let text = "";
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const pageText = content.items.map(it => it.str).join(' ');
+      text += pageText + "\n";
+    }
+    text = text.trim();
+    if (!text) {
+      throw new Error('PDF sem texto selecionável (provavelmente digitalizado). Converta as páginas em imagem e envie como foto.');
+    }
+    return text;
+  }
+
+  async function extractDocx(file){
+    if (!window.mammoth) throw new Error('Biblioteca de DOCX não carregou (verifique sua conexão).');
+    const buf = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({ arrayBuffer: buf });
+    const text = (result && result.value ? result.value : '').trim();
+    if (!text) throw new Error('Não foi possível extrair texto deste documento.');
+    return text;
+  }
+
+  async function extractPptx(file){
+    if (!window.JSZip) throw new Error('Biblioteca de PPTX não carregou (verifique sua conexão).');
+    const buf = await file.arrayBuffer();
+    const zip = await JSZip.loadAsync(buf);
+
+    // Slides ficam em ppt/slides/slideN.xml — ordena numericamente, não por texto (slide10 antes de slide2, senão).
+    const slideFiles = Object.keys(zip.files)
+      .filter(name => /^ppt\/slides\/slide\d+\.xml$/.test(name))
+      .sort((a, b) => {
+        const na = parseInt(a.match(/slide(\d+)\.xml$/)[1], 10);
+        const nb = parseInt(b.match(/slide(\d+)\.xml$/)[1], 10);
+        return na - nb;
+      });
+
+    if (!slideFiles.length) throw new Error('Nenhum slide encontrado neste arquivo.');
+
+    let text = "";
+    for (let i = 0; i < slideFiles.length; i++) {
+      const xml = await zip.files[slideFiles[i]].async('string');
+      // Texto de slide fica em tags <a:t>...</a:t>
+      const matches = xml.match(/<a:t>([^<]*)<\/a:t>/g) || [];
+      const slideText = matches
+        .map(m => m.replace(/<a:t>/, '').replace(/<\/a:t>/, ''))
+        .join(' ');
+      if (slideText.trim()) text += "Slide " + (i + 1) + ": " + slideText.trim() + "\n";
+    }
+
+    text = text.trim();
+    if (!text) throw new Error('Não foi possível extrair texto desta apresentação (pode ter só imagens).');
+    return text;
+  }
+
+  const MAX_MEDIA_SECONDS = 25 * 60; // acima disso a transcrição no navegador fica impraticável
+
+  async function decodeToMono16k(file){
+    const arrayBuffer = await file.arrayBuffer();
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) throw new Error('Seu navegador não suporta decodificação de áudio (Web Audio API).');
+    const decodeCtx = new AudioCtx();
+    let decoded;
+    try {
+      decoded = await decodeCtx.decodeAudioData(arrayBuffer);
+    } catch (e) {
+      throw new Error('Não foi possível ler o áudio deste arquivo (formato não suportado pelo navegador).');
+    } finally {
+      decodeCtx.close();
+    }
+    if (decoded.duration > MAX_MEDIA_SECONDS) {
+      throw new Error('Arquivo tem mais de 25 minutos. Corte um trecho menor e envie de novo (transcrição local fica muito lenta em arquivos longos).');
+    }
+    const targetRate = 16000;
+    const offlineCtx = new OfflineAudioContext(1, Math.ceil(decoded.duration * targetRate), targetRate);
+    const source = offlineCtx.createBufferSource();
+    source.buffer = decoded;
+    source.connect(offlineCtx.destination);
+    source.start(0);
+    const rendered = await offlineCtx.startRendering();
+    return rendered.getChannelData(0); // Float32Array, 16kHz, mono
+  }
+
+  async function extractMedia(file, onProgress){
+    if (!window.__getTranscriber) {
+      throw new Error('Motor de transcrição não carregou (verifique sua conexão e tente novamente).');
+    }
+    if (onProgress) onProgress('lendo áudio...');
+    const samples = await decodeToMono16k(file);
+
+    if (onProgress) onProgress('carregando modelo (1ª vez pode demorar)...');
+    const transcriber = await window.__getTranscriber((msg) => {
+      if (onProgress && msg && msg.status === 'progress' && typeof msg.progress === 'number') {
+        onProgress('baixando modelo (' + Math.round(msg.progress) + '%)...');
+      }
+    });
+
+    if (onProgress) onProgress('transcrevendo (pode levar alguns minutos)...');
+    const output = await transcriber(samples, {
+      language: 'portuguese',
+      task: 'transcribe',
+      chunk_length_s: 30,
+      stride_length_s: 5
+    });
+
+    const text = (output && output.text ? output.text : '').trim();
+    if (!text) throw new Error('Não foi possível extrair fala deste arquivo.');
+    return text;
+  }
+
+  async function processFile(entry){
+    entry.status = 'reading';
+    renderFileList();
+    try {
+      let text;
+      if (entry.kind === 'image') text = await extractImage(entry.file);
+      else if (entry.kind === 'pdf') text = await extractPdf(entry.file);
+      else if (entry.kind === 'docx') text = await extractDocx(entry.file);
+      else if (entry.kind === 'pptx') text = await extractPptx(entry.file);
+      else if (entry.kind === 'media') {
+        text = await extractMedia(entry.file, (msg) => { entry.progress = msg; renderFileList(); });
+      }
+      else throw new Error('Tipo de arquivo não suportado.');
+      entry.text = text;
+      entry.status = 'done';
+    } catch (err) {
+      entry.status = 'error';
+      entry.error = err && err.message ? err.message : 'Falha ao processar.';
+    }
+    renderFileList();
+    updateGenerateEnabled();
+  }
+
+  function addFiles(fileArr){
+    Array.from(fileArr).forEach(file => {
+      const kind = fileKind(file);
+      const entry = { id: nextId(), file, name: file.name, kind, status: 'pending', text: '', error: '', progress: '' };
+      state.files.push(entry);
+      if (kind === 'unknown') {
+        entry.status = 'error';
+        entry.error = 'Formato não suportado';
+      }
+    });
+    renderFileList();
+    state.files.filter(f => f.status === 'pending').forEach(processFile);
+  }
+
+  // ---------- YouTube link ----------
+  const YOUTUBE_URL_RE = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|shorts\/)[\w-]+|youtu\.be\/[\w-]+)/i;
+
+  function addYoutubeLink(){
+    const url = youtubeInputEl.value.trim();
+    if (!url) return;
+    if (!YOUTUBE_URL_RE.test(url)) {
+      setStatus('Isso não parece um link válido do YouTube.', 'err');
+      return;
+    }
+    const entry = { id: nextId(), file: null, name: url, kind: 'youtube', status: 'done', text: '', error: '', progress: '', youtubeUrl: url };
+    state.files.push(entry);
+    youtubeInputEl.value = '';
+    renderFileList();
+    updateGenerateEnabled();
+    setStatus('');
+  }
+  youtubeAddBtn.addEventListener('click', addYoutubeLink);
+  youtubeInputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); addYoutubeLink(); }
+  });
+
+  // ---------- Dropzone events ----------
+  fileInput.addEventListener('change', (e) => {
+    addFiles(e.target.files);
+    fileInput.value = "";
+  });
+  ['dragenter','dragover'].forEach(evt => {
+    dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
+  });
+  ['dragleave','drop'].forEach(evt => {
+    dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.remove('drag'); });
+  });
+  dropzone.addEventListener('drop', (e) => {
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+      addFiles(e.dataTransfer.files);
+    }
+  });
+
+  // ---------- Gemini call ----------
+  // Ordem de tentativa: o alias sempre-atualizado primeiro, depois nomes de
+  // modelo fixos conhecidos, caso o alias esteja indisponível por algum motivo.
+  const MODEL_CANDIDATES = ["gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-lite-latest"];
+
+  async function callGeminiModel(model, prompt, apiKey, maxOutputTokens, videoParts){
+    const url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent";
+    const parts = [{ text: prompt }].concat(videoParts || []);
+    const body = {
+      contents: [{ role: "user", parts: parts }],
+      generationConfig: {
+        temperature: 0.4,
+        maxOutputTokens: maxOutputTokens,
+        // Força a API a devolver JSON puro, sem crases nem texto solto ao redor —
+        // isso é o que mais evita respostas cortadas/mal formadas.
+        responseMimeType: "application/json"
+      }
+    };
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey
+      },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+      let detail = "";
+      try { const errJson = await res.json(); detail = errJson && errJson.error && errJson.error.message ? errJson.error.message : ""; }
+      catch (e) { /* ignore parse error */ }
+      const err = new Error("A API do Gemini retornou erro " + res.status + (detail ? (": " + detail) : "") + ".");
+      err.status = res.status;
+      throw err;
+    }
+    const data = await res.json();
+    const candidate = data && data.candidates && data.candidates[0];
+
+    // finishReason "MAX_TOKENS" avisa que a resposta foi cortada por falta de espaço —
+    // sinalizamos isso para o chamador decidir se tenta de novo com mais tokens.
+    const truncated = candidate && candidate.finishReason === 'MAX_TOKENS';
+
+    const parts2 = candidate && candidate.content && candidate.content.parts;
+    const rawText = parts2 && parts2.map(p => p.text || "").join("") || "";
+    return { rawText, truncated };
+  }
+
+  function parseCardsJson(rawText){
+    if (!rawText.trim()) {
+      throw new Error("A IA não retornou conteúdo. Tente novamente ou reduza a quantidade de cartões.");
+    }
+    const cleaned = rawText.trim()
+      .replace(/^```json/i, "")
+      .replace(/^```/,"")
+      .replace(/```$/,"")
+      .trim();
+
+    let parsed;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch (e) {
+      // Resposta pode ter vindo cortada (array sem fechar) — tenta recuperar
+      // os objetos completos que existirem antes do corte, em vez de descartar tudo.
+      const objMatches = cleaned.match(/\{[^{}]*"a"\s*:\s*"(?:[^"\\]|\\.)*"[^{}]*\}/g)
+                       || cleaned.match(/\{[^{}]*\}/g);
+      if (objMatches && objMatches.length) {
+        parsed = [];
+        for (const chunk of objMatches) {
+          try { parsed.push(JSON.parse(chunk)); } catch (e2) { /* descarta fragmento quebrado */ }
+        }
+      }
+      if (!parsed || !parsed.length) {
+        throw new Error("Não foi possível interpretar a resposta da IA. Tente novamente.");
+      }
+    }
+
+    if (!Array.isArray(parsed)) throw new Error("Formato inesperado retornado pela IA.");
+
+    return parsed
+      .filter(item => item && (item.q || item.question) && (item.a || item.answer))
+      .map(item => ({
+        id: nextId(),
+        question: String(item.q || item.question).trim(),
+        answer: String(item.a || item.answer).trim()
+      }));
+  }
+
+  async function callWithFallback(prompt, apiKey, maxOutputTokens, videoParts){
+    let lastErr = null;
+    for (const model of MODEL_CANDIDATES) {
+      try {
+        return await callGeminiModel(model, prompt, apiKey, maxOutputTokens, videoParts);
+      } catch (err) {
+        lastErr = err;
+        // Só tenta o próximo modelo se o erro for "modelo não encontrado/indisponível" (404).
+        // Erros de chave inválida, cota excedida, etc. já param aqui.
+        if (err.status !== 404) throw err;
+      }
+    }
+    throw lastErr;
+  }
+
+  function buildPrompt(combinedText, count, avoidQuestions, hasVideos){
+    const avoidBlock = avoidQuestions && avoidQuestions.length
+      ? ("\n\nNÃO repita nenhuma destas perguntas, já geradas antes:\n- " + avoidQuestions.join("\n- "))
+      : "";
+    const sourceLine = hasVideos
+      ? "A partir do texto abaixo (se houver) e do conteúdo dos vídeos anexados, gere exatamente "
+      : "A partir do texto de anotações de aula abaixo, gere exatamente ";
+    return (
+      "Você é um assistente que cria material de estudo. " +
+      sourceLine + count + " flashcards " +
+      "de pergunta e resposta em português, cobrindo os pontos mais importantes, sem repetir perguntas entre si. " +
+      "Perguntas devem ser claras e objetivas; respostas devem ser curtas e diretas (no máximo 2 frases). " +
+      "É muito importante que a lista tenha exatamente " + count + " itens, nem mais nem menos. " +
+      "Responda SOMENTE com um array JSON válido, sem markdown, sem crases, sem comentários, no formato exato: " +
+      '[{"q":"pergunta","a":"resposta"}, ...]' +
+      avoidBlock +
+      (combinedText ? ("\n\nTEXTO:\n" + combinedText.slice(0, 30000)) : "")
+    );
+  }
+
+  // Gera "count" flashcards. Se a IA devolver menos que o pedido (resposta cortada
+  // ou o modelo simplesmente ignorou a contagem), faz rodadas extras pedindo só
+  // o que falta, até completar ou esgotar as tentativas.
+  async function generateFlashcardsFromText(combinedText, count, apiKey, onProgress, videoParts){
+    let cards = [];
+    const seen = new Set();
+    const maxRounds = 4;
+    const hasVideos = !!(videoParts && videoParts.length);
+
+    for (let round = 0; round < maxRounds && cards.length < count; round++) {
+      const remaining = count - cards.length;
+      if (onProgress) onProgress(round === 0 ? 'Gerando flashcards com a IA...' : ('Completando cartões que faltaram (' + remaining + ' restantes)...'));
+
+      // Tokens generosos: ~120 tokens por cartão cobre pergunta+resposta com folga,
+      // mais uma margem fixa para a estrutura do JSON.
+      const maxOutputTokens = Math.min(8192, 400 + remaining * 120);
+      const prompt = buildPrompt(combinedText, remaining, Array.from(seen), hasVideos);
+
+      let result;
+      try {
+        result = await callWithFallback(prompt, apiKey, maxOutputTokens, videoParts);
+      } catch (err) {
+        if (cards.length > 0) break; // já temos alguns cartões: entrega o que deu, não derruba tudo
+        throw err;
+      }
+
+      let newCards = [];
+      try {
+        newCards = parseCardsJson(result.rawText);
+      } catch (err) {
+        if (cards.length > 0) break;
+        throw err;
+      }
+
+      for (const c of newCards) {
+        const key = c.question.trim().toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          cards.push(c);
+        }
+      }
+
+      // Se nem essa rodada nem a IA conseguiram adicionar nada novo, para de insistir.
+      if (newCards.length === 0) break;
+    }
+
+    return cards.slice(0, count);
+  }
+
+  // ---------- Generate flow ----------
+  generateBtn.addEventListener('click', async () => {
+    const doneFiles = state.files.filter(f => f.status === 'done' && f.text);
+    const youtubeEntries = state.files.filter(f => f.status === 'done' && f.kind === 'youtube');
+    if (!doneFiles.length && !youtubeEntries.length) {
+      setStatus('Nenhum arquivo ou link processado com sucesso ainda.', 'err');
+      return;
+    }
+    const apiKey = apiKeyEl.value.trim();
+    if (!apiKey) {
+      setStatus('Cole sua chave da API do Gemini.', 'err');
+      return;
+    }
+    let count = parseInt(numCardsEl.value, 10);
+    if (!count || count < 1) count = 10;
+    const HARD_LIMIT = 60; // limite de segurança para não estourar a cota gratuita da API num único clique
+    let clampNotice = '';
+    if (count > HARD_LIMIT) {
+      clampNotice = 'Pedido reduzido de ' + count + ' para ' + HARD_LIMIT + ' (limite por geração, para não estourar sua cota gratuita da API). ';
+      count = HARD_LIMIT;
+      numCardsEl.value = String(HARD_LIMIT);
+    }
+
+    const combinedText = doneFiles.map(f => "### " + f.name + "\n" + f.text).join("\n\n");
+    const videoParts = youtubeEntries.map(f => ({ fileData: { fileUri: f.youtubeUrl } }));
+
+    generateBtn.disabled = true;
+    loadingBox.classList.add('show');
+    loadingText.textContent = 'Gerando flashcards com a IA...';
+    setStatus(clampNotice);
+
+    try {
+      const cards = await generateFlashcardsFromText(combinedText, count, apiKey, (msg) => { loadingText.textContent = msg; }, videoParts);
+      if (!cards.length) {
+        setStatus(clampNotice + 'A IA não retornou nenhum flashcard válido. Tente novamente.', 'err');
+      } else {
+        state.flashcards = state.flashcards.concat(cards);
+        renderCards();
+        const shortfall = count - cards.length;
+        const resultMsg = shortfall > 0
+          ? (cards.length + ' de ' + count + ' flashcards gerados (o conteúdo enviado pode ser curto demais para mais que isso sem repetir).')
+          : (cards.length + ' flashcards gerados com sucesso.');
+        setStatus(clampNotice + resultMsg, shortfall > 0 ? '' : 'ok');
+        resultsSec.classList.add('show');
+        resultsSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    } catch (err) {
+      setStatus(err && err.message ? err.message : 'Erro ao gerar flashcards.', 'err');
+    } finally {
+      loadingBox.classList.remove('show');
+      updateGenerateEnabled();
+    }
+  });
+
+  // ---------- Card rendering ----------
+  function renderCards(){
+    cardGrid.innerHTML = "";
+    countBadge.textContent = state.flashcards.length + (state.flashcards.length === 1 ? ' cartão' : ' cartões');
+    emptyState.classList.toggle('show', state.flashcards.length === 0);
+
+    state.flashcards.forEach(card => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'flashcard';
+
+      const inner = document.createElement('div');
+      inner.className = 'flashcard-inner';
+
+      const front = document.createElement('div');
+      front.className = 'face front-face clickable';
+      front.innerHTML =
+        '<div class="tag">Pergunta</div>' +
+        '<div class="content" contenteditable="true" spellcheck="false"></div>' +
+        '<div class="hint-flip">clique para virar ↻</div>';
+      front.querySelector('.content').textContent = card.question;
+
+      const back = document.createElement('div');
+      back.className = 'face back-face clickable';
+      back.innerHTML =
+        '<div class="tag">Resposta</div>' +
+        '<div class="content" contenteditable="true" spellcheck="false"></div>' +
+        '<div class="hint-flip">clique para virar ↻</div>';
+      back.querySelector('.content').textContent = card.answer;
+
+      // Sync edits back into state
+      front.querySelector('.content').addEventListener('input', (e) => { card.question = e.target.textContent; });
+      back.querySelector('.content').addEventListener('input', (e) => { card.answer = e.target.textContent; });
+
+      // Flip on click, but not when clicking into the editable text itself
+      [front, back].forEach(face => {
+        face.addEventListener('click', (e) => {
+          if (e.target.classList.contains('content')) return;
+          wrapper.classList.toggle('flipped');
+        });
+      });
+
+      const tools = document.createElement('div');
+      tools.className = 'card-tools';
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.textContent = '✕';
+      delBtn.setAttribute('aria-label', 'Remover cartão');
+      delBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        state.flashcards = state.flashcards.filter(c => c.id !== card.id);
+        renderCards();
+      });
+      tools.appendChild(delBtn);
+
+      inner.appendChild(front);
+      inner.appendChild(back);
+      wrapper.appendChild(inner);
+      wrapper.appendChild(tools);
+      cardGrid.appendChild(wrapper);
+    });
+  }
+
+  addCardBtn.addEventListener('click', () => {
+    state.flashcards.push({ id: nextId(), question: 'Nova pergunta', answer: 'Nova resposta' });
+    renderCards();
+    resultsSec.classList.add('show');
+  });
+
+  // ---------- CSV export ----------
+  function csvEscape(value){
+    const v = String(value == null ? '' : value).replace(/"/g, '""');
+    return '"' + v + '"';
+  }
+
+  exportBtn.addEventListener('click', () => {
+    if (!state.flashcards.length) {
+      setStatus('Nenhum flashcard para exportar ainda.', 'err');
+      return;
+    }
+    const lines = state.flashcards.map(c => csvEscape(c.question) + ',' + csvEscape(c.answer));
+    const csvContent = lines.join('\r\n');
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'flashcards.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  });
+
+  // ---------- Offline study site export ----------
+  function buildOfflineSiteHtml(cards){
+    const safeData = JSON.stringify(cards.map(c => ({ q: c.question, a: c.answer })))
+      .replace(/<\/script/gi, '<\\/script');
+
+    return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flash Cards Studies · Modo offline</title>
+<style>
+  :root{
+    --bg:#0B0E14; --panel:#12161F; --border:rgba(255,255,255,0.08);
+    --text:#EDEFF3; --text-muted:#8B93A6;
+    --card-bg:#FBFAF7; --card-ink:#1C2027;
+    --accent:#2FBF9F; --accent-dark:#249E84; --accent-soft:rgba(47,191,159,0.12);
+    --violet:#8F7FE8; --violet-soft:rgba(143,127,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;background:var(--bg);color:var(--text);min-height:100vh;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Inter,sans-serif;
+    display:flex;flex-direction:column;align-items:center;padding:48px 20px 64px;
+  }
+  h1{font-size:22px;font-weight:700;margin:0 0 4px;}
+  .sub{color:var(--text-muted);font-size:13.5px;margin:0 0 32px;text-align:center;}
+  .progress{font-size:13px;color:var(--text-muted);margin-bottom:14px;}
+  .stage{width:100%;max-width:520px;perspective:1400px;height:300px;cursor:pointer;}
+  .stage-inner{position:relative;width:100%;height:100%;transition:transform .45s cubic-bezier(.4,.2,.2,1);transform-style:preserve-3d;}
+  .stage.flipped .stage-inner{transform:rotateY(180deg);}
+  .face{
+    position:absolute;inset:0;background:var(--card-bg);color:var(--card-ink);
+    border-radius:18px;box-shadow:0 12px 30px rgba(0,0,0,0.35);
+    backface-visibility:hidden;padding:32px;display:flex;flex-direction:column;
+  }
+  .face .tag{display:inline-flex;align-self:flex-start;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:4px 11px;border-radius:100px;margin-bottom:16px;}
+  .front .tag{background:var(--accent-soft);color:var(--accent-dark);}
+  .back .tag{background:var(--violet-soft);color:var(--violet);}
+  .back{transform:rotateY(180deg);}
+  .face .content{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;font-size:19px;font-weight:600;line-height:1.5;overflow-y:auto;}
+  .hint{font-size:11.5px;color:#A6A196;text-align:center;margin-top:6px;}
+  .controls{display:flex;gap:10px;margin-top:28px;flex-wrap:wrap;justify-content:center;}
+  button{
+    font-family:inherit;font-size:14px;font-weight:600;border-radius:9px;padding:11px 20px;
+    cursor:pointer;border:1px solid var(--border);background:var(--panel);color:var(--text);
+  }
+  button:hover{border-color:var(--accent);color:var(--accent);}
+  button.primary{background:var(--accent);color:#08110E;border:none;}
+  button.primary:hover{background:var(--accent-dark);color:#08110E;}
+  button:disabled{opacity:.35;cursor:not-allowed;}
+  .empty{color:var(--text-muted);text-align:center;max-width:400px;}
+</style>
+</head>
+<body>
+  <h1>Flash Cards Studies</h1>
+  <p class="sub">Modo offline: seus flashcards salvos neste arquivo, sem precisar de internet.</p>
+
+  <div id="app"></div>
+
+<script>
+(function(){
+  "use strict";
+  var cards = ${safeData};
+  var order = cards.map(function(_, i){ return i; });
+  var pos = 0;
+  var flipped = false;
+
+  var app = document.getElementById('app');
+
+  function shuffle(arr){
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+    }
+    return arr;
+  }
+
+  function render(){
+    if (!cards.length) {
+      app.innerHTML = '<p class="empty">Nenhum flashcard neste arquivo.</p>';
+      return;
+    }
+    var card = cards[order[pos]];
+    app.innerHTML =
+      '<div class="progress">' + (pos + 1) + ' de ' + cards.length + '</div>' +
+      '<div class="stage' + (flipped ? ' flipped' : '') + '" id="stage">' +
+        '<div class="stage-inner">' +
+          '<div class="face front"><span class="tag">Pergunta</span><div class="content"></div></div>' +
+          '<div class="face back"><span class="tag">Resposta</span><div class="content"></div></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="hint">clique no cartão para virar</div>' +
+      '<div class="controls">' +
+        '<button id="prevBtn"' + (pos === 0 ? ' disabled' : '') + '>Anterior</button>' +
+        '<button class="primary" id="shuffleBtn">Embaralhar</button>' +
+        '<button id="nextBtn"' + (pos === cards.length - 1 ? ' disabled' : '') + '>Próximo</button>' +
+      '</div>';
+
+    app.querySelector('.front .content').textContent = card.q;
+    app.querySelector('.back .content').textContent = card.a;
+
+    document.getElementById('stage').addEventListener('click', function(){
+      flipped = !flipped;
+      render();
+    });
+    document.getElementById('prevBtn').addEventListener('click', function(e){
+      e.stopPropagation();
+      if (pos > 0) { pos--; flipped = false; render(); }
+    });
+    document.getElementById('nextBtn').addEventListener('click', function(e){
+      e.stopPropagation();
+      if (pos < cards.length - 1) { pos++; flipped = false; render(); }
+    });
+    document.getElementById('shuffleBtn').addEventListener('click', function(e){
+      e.stopPropagation();
+      shuffle(order);
+      pos = 0; flipped = false; render();
+    });
+  }
+
+  render();
+})();
+<\/script>
+</body>
+</html>`;
+  }
+
+  offlineBtn.addEventListener('click', () => {
+    if (!state.flashcards.length) {
+      setStatus('Nenhum flashcard para incluir no site offline ainda.', 'err');
+      return;
+    }
+    const html = buildOfflineSiteHtml(state.flashcards);
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'flashcards-offline.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  });
+
+  // ---------- Init ----------
+  renderFileList();
+  renderCards();
+  updateGenerateEnabled();
+})();
+</script>
+</body>
+</html>
