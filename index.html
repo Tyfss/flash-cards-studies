@@ -13,7 +13,7 @@
 -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'none';
-  script-src 'self' 'sha256-3sF6Xl8lL5wPEnxSlqtUNmONRFUe8rJ12l5OE9NYi48=' 'sha256-vx1awx2z1qYem9iMZGCTZykhF/RNs6GYmBRjw00qG2U=' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
+  script-src 'self' 'sha256-uePn+hnwn3Bb+jQ1wb4vVBnO7HaQrLQDQKGzkunyzr8=' 'sha256-vx1awx2z1qYem9iMZGCTZykhF/RNs6GYmBRjw00qG2U=' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
   font-src https://fonts.gstatic.com;
   img-src 'self' data: blob:;
@@ -262,20 +262,27 @@
   }
   .flashcard-inner{
     position:relative;width:100%;height:100%;
-    transition:transform .45s cubic-bezier(.4,.2,.2,1);
+    transition:transform .6s cubic-bezier(0.16, 1, 0.3, 1);
     transform-style:preserve-3d;
   }
   .flashcard.flipped .flashcard-inner{transform:rotateY(180deg);}
   .face{
     position:absolute;inset:0;
-    background:var(--card-bg);
+    background:linear-gradient(155deg, #FFFFFF 0%, var(--card-bg) 60%, #F1ECDD 100%);
     color:var(--card-ink);
     border-radius:var(--radius-md);
-    box-shadow:0 10px 24px rgba(0,0,0,0.28), 0 0 0 1px rgba(0,0,0,0.03);
+    box-shadow:0 1px 2px rgba(0,0,0,0.06), 0 12px 28px rgba(0,0,0,0.30), 0 0 0 1px rgba(0,0,0,0.03);
     backface-visibility:hidden;
     padding:22px 22px 16px;
     display:flex;
     flex-direction:column;
+    transition:box-shadow .35s ease;
+  }
+  .flashcard:hover .face{
+    box-shadow:0 2px 4px rgba(0,0,0,0.08), 0 18px 40px rgba(0,0,0,0.38), 0 0 0 1px rgba(0,0,0,0.04);
+  }
+  .back-face{
+    background:linear-gradient(155deg, #FFFFFF 0%, var(--card-bg) 55%, #EDE9F5 100%);
   }
   .face .tag{
     display:inline-flex;
@@ -298,7 +305,9 @@
     overflow-y:auto;
     outline:none;
     line-height:1.5;
+    transition:transform .5s cubic-bezier(0.16, 1, 0.3, 1), opacity .5s ease;
   }
+  .flashcard:hover .content{transform:translateY(-2px);}
   .face .content:focus{background:rgba(0,0,0,0.03);border-radius:6px;}
   .back-face{transform:rotateY(180deg);}
   .face .hint-flip{
@@ -1108,18 +1117,21 @@
   .sub{color:var(--text-muted);font-size:13.5px;margin:0 0 32px;text-align:center;}
   .progress{font-size:13px;color:var(--text-muted);margin-bottom:14px;}
   .stage{width:100%;max-width:520px;perspective:1400px;height:300px;cursor:pointer;}
-  .stage-inner{position:relative;width:100%;height:100%;transition:transform .45s cubic-bezier(.4,.2,.2,1);transform-style:preserve-3d;}
+  .stage-inner{position:relative;width:100%;height:100%;transition:transform .6s cubic-bezier(0.16, 1, 0.3, 1);transform-style:preserve-3d;}
   .stage.flipped .stage-inner{transform:rotateY(180deg);}
   .face{
-    position:absolute;inset:0;background:var(--card-bg);color:var(--card-ink);
-    border-radius:18px;box-shadow:0 12px 30px rgba(0,0,0,0.35);
+    position:absolute;inset:0;background:linear-gradient(155deg, #FFFFFF 0%, var(--card-bg) 60%, #F1ECDD 100%);color:var(--card-ink);
+    border-radius:18px;box-shadow:0 1px 2px rgba(0,0,0,0.06), 0 14px 34px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,0,0,0.03);
     backface-visibility:hidden;padding:32px;display:flex;flex-direction:column;
+    transition:box-shadow .35s ease;
   }
+  .stage:hover .face{box-shadow:0 2px 4px rgba(0,0,0,0.08), 0 20px 46px rgba(0,0,0,0.42), 0 0 0 1px rgba(0,0,0,0.04);}
   .face .tag{display:inline-flex;align-self:flex-start;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:4px 11px;border-radius:100px;margin-bottom:16px;}
   .front .tag{background:var(--accent-soft);color:var(--accent-dark);}
   .back .tag{background:var(--violet-soft);color:var(--violet);}
-  .back{transform:rotateY(180deg);}
-  .face .content{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;font-size:19px;font-weight:600;line-height:1.5;overflow-y:auto;}
+  .back{transform:rotateY(180deg);background:linear-gradient(155deg, #FFFFFF 0%, var(--card-bg) 55%, #EDE9F5 100%);}
+  .face .content{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;font-size:19px;font-weight:600;line-height:1.5;overflow-y:auto;transition:transform .5s cubic-bezier(0.16, 1, 0.3, 1);}
+  .stage:hover .content{transform:translateY(-2px);}
   .hint{font-size:11.5px;color:#A6A196;text-align:center;margin-top:6px;}
   .controls{display:flex;gap:10px;margin-top:28px;flex-wrap:wrap;justify-content:center;}
   button{
@@ -1162,10 +1174,11 @@
       app.innerHTML = '<p class="empty">Nenhum flashcard neste arquivo.</p>';
       return;
     }
+    flipped = false; // sempre começa mostrando a pergunta ao trocar de cartão
     var card = cards[order[pos]];
     app.innerHTML =
       '<div class="progress">' + (pos + 1) + ' de ' + cards.length + '</div>' +
-      '<div class="stage' + (flipped ? ' flipped' : '') + '" id="stage">' +
+      '<div class="stage" id="stage">' +
         '<div class="stage-inner">' +
           '<div class="face front"><span class="tag">Pergunta</span><div class="content"></div></div>' +
           '<div class="face back"><span class="tag">Resposta</span><div class="content"></div></div>' +
@@ -1181,22 +1194,25 @@
     app.querySelector('.front .content').textContent = card.q;
     app.querySelector('.back .content').textContent = card.a;
 
-    document.getElementById('stage').addEventListener('click', function(){
+    var stageEl = document.getElementById('stage');
+    stageEl.addEventListener('click', function(){
+      // Alterna a classe no MESMO elemento, sem recriar o DOM — só assim
+      // a transição CSS do flip tem algo para animar de um estado a outro.
       flipped = !flipped;
-      render();
+      stageEl.classList.toggle('flipped', flipped);
     });
     document.getElementById('prevBtn').addEventListener('click', function(e){
       e.stopPropagation();
-      if (pos > 0) { pos--; flipped = false; render(); }
+      if (pos > 0) { pos--; render(); }
     });
     document.getElementById('nextBtn').addEventListener('click', function(e){
       e.stopPropagation();
-      if (pos < cards.length - 1) { pos++; flipped = false; render(); }
+      if (pos < cards.length - 1) { pos++; render(); }
     });
     document.getElementById('shuffleBtn').addEventListener('click', function(e){
       e.stopPropagation();
       shuffle(order);
-      pos = 0; flipped = false; render();
+      pos = 0; render();
     });
   }
 
