@@ -1,5 +1,7 @@
 # Flash Cards Studies
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/01ff4d3b-94f9-452b-ae09-e6083a2b4b19/deploy-status)](https://app.netlify.com/projects/flashcardsstudies/deploys)
+
 Site gratuito, 100% no navegador, que transforma anotações de aula em flashcards de estudo usando IA. Sem servidor, sem custo, sem cadastro.
 
 **Site em produção:** https://flashcardsstudies.netlify.app
